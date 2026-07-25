@@ -1,0 +1,71 @@
+package com.q4magic.common.dto;
+
+import lombok.Data;
+
+import java.util.Date;
+import java.util.List;
+
+@Data
+public class CustomersDto {
+    private Integer id;
+    private String username;
+    private String firstName;
+    private String lastName;
+    private String password;
+    private String loginPreference;
+    private String accountOwner;
+    private String title;
+    private Integer roleId;
+    private String emailAddress;
+    private String address1;
+    private String address2;
+    private String city;
+    private String state;
+    private String country;
+    private Integer zipCode;
+    private String startEvalPeriod;
+    private String endEvalPeriod;
+    private String quota;
+    private String evalPeriod;
+    private String calendarYearType;
+    private String question1;
+    private String question2;
+    private String question3;
+    private String answer1;
+    private String answer2;
+    private String answer3;
+    private String billingAddress1;
+    private String billingAddress2;
+    private String billingCity;
+    private String billingState;
+    private String billingCountry;
+    private Integer billingZipcode;
+    private String billingPhone;
+    private String dateRegistered;
+    private Integer authId;
+    private Boolean billingAddressSameAsPrimary;
+    private BusinessInfoDto businessInfo;
+    private String authorizeCustomerProfileId;
+    private String authorizeCustomerPaymentProfileId;
+    private Integer subUserTypeId;
+    private Integer parentUserId;
+    private SubUserTypeDto subUserTypeDto;
+    private Integer crmId;
+    private String googleCalendarAccessToken;
+    private String googleCalendarRefreshToken;
+    private String googleCalendarSyncTime;
+    private String googleCalendarEmail;
+    private String outlookCalendarAccessToken;
+    private String outlookCalendarRefreshToken;
+    private String outlookCalendarSyncTime;
+    private String outlookCalendarEmail;
+    private String salesforceAccessToken;
+    private String salesforceInstanceUrl;
+    private String timeZone;
+    private String webConference;
+    private String emailNotification;
+    private Integer planId;
+    private String defaultCalendar;
+    private String meetingQuota;
+    private List<CustomerQuotaDto> customerQuotaDto;
+}
