@@ -2,7 +2,6 @@ package com.q4magic.common.dto;
 
 import lombok.Data;
 
-import java.util.Date;
 import java.util.List;
 
 @Data
@@ -67,5 +66,6 @@ public class CustomersDto {
     private Integer planId;
     private String defaultCalendar;
     private String meetingQuota;
+    private Integer reportTo;
     private List<CustomerQuotaDto> customerQuotaDto;
 }

@@ -290,6 +290,45 @@ public class CustomersServiceImpl implements CustomersService {
     }
 
     @Override
+    public List<CustomersDto> getAllSubUsersWithParntSubUser(Integer userId) {
+        try {
+            Customers me = customersRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+            // Map to keep sub-users unique by their id, while preserving order
+            Map<Integer, Customers> uniqueUsers = new LinkedHashMap<>();
+
+            // 1) Add logged-in user's own sub-users
+            List<Customers> mySubUsers = customersRepository.getAllSubUsers(userId);
+            if (mySubUsers != null) {
+                for (Customers c : mySubUsers) {
+                    uniqueUsers.put(c.getId(), c);
+                }
+            }
+
+            // 2) If the logged-in user has a parent customer, fetch the parent's sub-users as well
+            if (me.getCustomers() != null) {
+                Integer parentId = me.getCustomers().getId();
+                List<Customers> parentSubUsers = customersRepository.getAllSubUsers(parentId);
+                if (parentSubUsers != null) {
+                    for (Customers c : parentSubUsers) {
+                        uniqueUsers.put(c.getId(), c);
+                    }
+                }
+            }
+
+            List<CustomersDto> dtoList = new ArrayList<>();
+            for (Integer id : uniqueUsers.keySet()) {
+                dtoList.add(this.getCustomerById(id));
+            }
+            return dtoList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public List<CustomersDto> getAllCustomers() {
         try {
             List<Customers> customersList = this.customersRepository.findAll();
@@ -347,7 +386,9 @@ public class CustomersServiceImpl implements CustomersService {
             if (customer.getSubscriptionRates() != null) {
                 customersDto.setPlanId(customer.getSubscriptionRates().getId());
             }
-
+            if (customer.getReportTo() != null) {
+                customersDto.setReportTo(customer.getReportTo().getId());
+            }
             if (customer.getCustomers() != null) {
                 customersDto.setParentUserId(customer.getCustomers().getId());
 //                Map<String, Object> res = this.accountService.getAccountByName(customer.getCustomers().getId());
@@ -421,12 +462,17 @@ public class CustomersServiceImpl implements CustomersService {
                 SubscriptionRates subscriptionRates = this.subscriptionRatesRepository.findById(customersDto.getPlanId()).orElseThrow(() -> new RuntimeException("Subscription Rates not found"));
                 customer.setSubscriptionRates(subscriptionRates);
             }
-
+            if (customersDto.getReportTo() != null) {
+                Customers reportto = this.customersRepository.findById(customersDto.getReportTo()).orElseThrow(() -> new RuntimeException("Customer not found"));
+                customer.setReportTo(reportto);
+            } else {
+                customer.setReportTo(null);
+            }
 //            if (customersDto.getAuthId() != null) {
 //                AuthIDetails authIdDetails = this.authIdDetailsRepository.findById(customersDto.getAuthId()).orElseThrow(() -> new RuntimeException("AuthIdDetails not found"));
 //                customer.setAuthIDetails(authIdDetails);
 //            }
-            BeanUtils.copyProperties(customersDto, customer, "id", "accountOwner", "dateRegistered", "evalPeriod", "role", "subscriptionRates");
+            BeanUtils.copyProperties(customersDto, customer, "id", "accountOwner", "dateRegistered", "evalPeriod", "role", "subscriptionRates", "reportTo");
             this.customersRepository.save(customer);
             if (customersDto.getParentUserId() == null) {
                 sendWelcomeEmail(customer.getEmailAddress(), customer.getUsername());
@@ -443,7 +489,7 @@ public class CustomersServiceImpl implements CustomersService {
     public CustomersDto updateCustomer(Integer id, CustomersDto customersDto, String type) {
         try {
             Customers customer = this.customersRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
-            if (customersDto.getPlanId() !=null){
+            if (customersDto.getPlanId() != null) {
                 SubscriptionRates subscriptionRates = this.subscriptionRatesRepository.findById(customersDto.getPlanId()).orElseThrow(() -> new RuntimeException("Subscription Rates not found"));
                 customer.setSubscriptionRates(subscriptionRates);
             }
@@ -467,7 +513,7 @@ public class CustomersServiceImpl implements CustomersService {
 
             if (type.equals("Subuser")) {
                 customer.setAccountOwner("N");
-                if (customersDto.getSubUserTypeId() !=null){
+                if (customersDto.getSubUserTypeId() != null) {
                     SubUserType subUserType = this.subUserTypeRepository.findById(customersDto.getSubUserTypeId()).orElseThrow(() -> new RuntimeException("SubUserType not found"));
                     customer.setSubUserType(subUserType);
                 }
@@ -493,7 +539,13 @@ public class CustomersServiceImpl implements CustomersService {
                 customer.setBillingZipcode(customersDto.getBillingZipcode());
                 customer.setBillingCountry(customersDto.getBillingCountry());
             }
-            BeanUtils.copyProperties(customersDto, customer, "id", "accountOwner", "role", "customers", "evalPeriod", "dateRegistered", "billingAddress1", "billingAddress2", "billingCity", "billingState", "billingZipcode", "billingCountry", "subscriptionRates");
+            if (customersDto.getReportTo() != null) {
+                Customers reportto = this.customersRepository.findById(customersDto.getReportTo()).orElseThrow(() -> new RuntimeException("Customer not found"));
+                customer.setReportTo(reportto);
+            } else {
+                customer.setReportTo(null);
+            }
+            BeanUtils.copyProperties(customersDto, customer, "id", "accountOwner", "role", "customers", "evalPeriod", "dateRegistered", "billingAddress1", "billingAddress2", "billingCity", "billingState", "billingZipcode", "billingCountry", "subscriptionRates", "reportTo");
             this.customersRepository.save(customer);
             return customersDto;
         } catch (Exception e) {
@@ -1210,7 +1262,7 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public void saveCustomerTimeZone(String timeZone, Integer customerId) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(()->new RuntimeException("Customer not found!"));
+            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found!"));
             customers.setTimeZone(timeZone);
             this.customersRepository.save(customers);
         } catch (Exception e) {
@@ -1219,9 +1271,9 @@ public class CustomersServiceImpl implements CustomersService {
     }
 
     @Override
-    public void saveWebConference(String webConference,Integer customerId){
+    public void saveWebConference(String webConference, Integer customerId) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(()->new RuntimeException("Customer not found!"));
+            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found!"));
             customers.setWebConference(webConference);
             this.customersRepository.save(customers);
         } catch (Exception e) {
@@ -1230,9 +1282,9 @@ public class CustomersServiceImpl implements CustomersService {
     }
 
     @Override
-    public void saveMailNotification(String mailNotification,Integer customerId){
+    public void saveMailNotification(String mailNotification, Integer customerId) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(()->new RuntimeException("Customer not found!"));
+            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found!"));
             customers.setEmailNotification(mailNotification);
             this.customersRepository.save(customers);
         } catch (Exception e) {
@@ -1241,13 +1293,176 @@ public class CustomersServiceImpl implements CustomersService {
     }
 
     @Override
-    public void  saveDefaultCalendar(String defaultCalendar,Integer customerId){
+    public void saveDefaultCalendar(String defaultCalendar, Integer customerId) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(()->new RuntimeException("Customer not found!"));
+            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found!"));
             customers.setDefaultCalendar(defaultCalendar);
             this.customersRepository.save(customers);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public Map<String, Object> reportHierarch(Integer customerId) {
+        try {
+            Customers start = customersRepository.findById(customerId)
+                    .orElseThrow(() -> new IllegalArgumentException("Customer not found: " + customerId));
+
+            // Keep hierarchy inside the same parent customer if applicable
+            Integer orgId = (start.getCustomers() != null) ? start.getCustomers().getId() : start.getId();
+
+            // 1) Build upward chain: start -> reportTo -> ... -> top (cycle-safe)
+            List<Customers> upward = collectUpwardChain(start);
+
+            // upward is [start, reportTo, grandReportTo, ... top]
+            // root should be the TOP
+            Collections.reverse(upward); // [top ... reportTo start]
+
+            // 2) We want a path list of IDs: [topId, ..., startId]
+            List<Integer> pathIds = upward.stream()
+                    .map(Customers::getId)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            if (pathIds.isEmpty()) {
+                // extremely defensive fallback
+                return toMapLite(start, null);
+            }
+
+            // 3) Build a tree from the top, expanding siblings at each manager level.
+            // Only expand children deeper for the node on the path; other siblings are leaf nodes.
+            Set<Integer> buildVisited = new HashSet<>();
+            CustomerNodeDto root = buildHierarchyAlongPath(
+                    pathIds.get(0),
+                    orgId,
+                    pathIds,
+                    1,
+                    buildVisited
+            );
+
+            // 4) Serialize
+            return toMap(root);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    private List<Customers> collectUpwardChain(Customers start) {
+        List<Customers> chain = new ArrayList<>();
+        Set<Integer> visited = new HashSet<>();
+
+        Customers cur = start;
+        while (cur != null) {
+            Integer id = cur.getId();
+            if (id != null && !visited.add(id)) {
+                // cycle detected -> stop
+                break;
+            }
+            chain.add(cur);
+            cur = cur.getReportTo(); // manager ("report_to")
+        }
+        return chain;
+    }
+
+    private CustomerNodeDto buildHierarchyAlongPath(
+            Integer currentId,
+            Integer orgId,
+            List<Integer> pathIds,
+            int nextPathIndex,
+            Set<Integer> buildVisited
+    ) {
+        if (currentId == null) return null;
+
+        // Cycle protection during build
+        if (!buildVisited.add(currentId)) {
+            CustomerNodeDto cycleNode = new CustomerNodeDto();
+            Customers c = customersRepository.findById(currentId).orElse(null);
+            cycleNode.id = currentId;
+            cycleNode.name = (c != null) ? fullName(c) : "Unknown";
+            cycleNode.title = (c != null) ? c.getTitle() : null;
+            cycleNode.children = null; // stop expansion
+            return cycleNode;
+        }
+
+        Customers current = customersRepository.findById(currentId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found: " + currentId));
+
+        CustomerNodeDto node = new CustomerNodeDto();
+        node.id = current.getId();
+        node.name = fullName(current);
+        node.title = current.getTitle();
+
+        // Direct reports (siblings group at this level)
+        List<Customers> reports = customersRepository.findDirectReports(orgId, currentId);
+
+        // Sort for stable UI (optional)
+        reports.sort(Comparator.comparing(this::fullName, String.CASE_INSENSITIVE_ORDER));
+
+        if (reports.isEmpty()) {
+            node.children = null;
+            return node;
+        }
+
+        Integer nextOnPath = (nextPathIndex < pathIds.size()) ? pathIds.get(nextPathIndex) : null;
+
+        List<CustomerNodeDto> childDtos = new ArrayList<>(reports.size());
+        for (Customers r : reports) {
+            if (nextOnPath == null) {
+                // At or below the selected node -> fully expand all descendants
+                childDtos.add(buildHierarchyAlongPath(r.getId(), orgId, pathIds, nextPathIndex + 1, buildVisited));
+            } else if (r.getId() != null && r.getId().equals(nextOnPath)) {
+                // Above the selected node -> expand only the path leading to it
+                childDtos.add(buildHierarchyAlongPath(r.getId(), orgId, pathIds, nextPathIndex + 1, buildVisited));
+            } else {
+                // Sibling at a higher level (not on path to the selected node) -> leaf
+                CustomerNodeDto leaf = new CustomerNodeDto();
+                leaf.id = r.getId();
+                leaf.name = fullName(r);
+                leaf.title = r.getTitle();
+                leaf.children = null;
+                childDtos.add(leaf);
+            }
+        }
+
+        node.children = childDtos.isEmpty() ? null : childDtos;
+        return node;
+    }
+
+    private String fullName(Customers c) {
+        String fn = c.getFirstName();
+        String ln = c.getLastName();
+        String name = ((fn == null ? "" : fn.trim()) + " " + (ln == null ? "" : ln.trim())).trim();
+        if (name.isEmpty()) name = "Unknown";
+        return name;
+    }
+
+    private Map<String, Object> toMap(CustomerNodeDto node) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", node.id);
+        m.put("name", node.name);
+        m.put("title", node.title);
+
+        if (node.children == null || node.children.isEmpty()) {
+            m.put("children", null);
+        } else {
+            List<Map<String, Object>> kids = new ArrayList<>(node.children.size());
+            for (CustomerNodeDto ch : node.children) kids.add(toMap(ch));
+            m.put("children", kids);
+        }
+        return m;
+    }
+
+    private Map<String, Object> toMapLite(Customers c, List<Map<String, Object>> children) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", c.getId());
+        m.put("name", fullName(c));
+        m.put("title", c.getTitle());
+        m.put("children", children == null || children.isEmpty() ? null : children);
+        return m;
+    }
+
+
 }

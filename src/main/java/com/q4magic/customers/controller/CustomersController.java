@@ -69,6 +69,16 @@ public class CustomersController {
         }
     }
 
+    @GetMapping("/getReportHierarch/{id}")
+    public ApiResponse<?> getReportHierarch(@PathVariable("id") Integer customerId) {
+        Map<String, Object> resBody = new HashMap<>();
+        try {
+            return new ApiResponse<>(HttpStatus.OK.value(), "Report Hierarch fetched successfully", this.customersService.reportHierarch(customerId));
+        } catch (Exception e) {
+            return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), resBody);
+        }
+    }
+
     @GetMapping("/getCustomerByEmail/{email}")
     public ApiResponse<?> getCustomerByEmail(@PathVariable String email) {
         Map<String, Object> resBody = new HashMap<>();
@@ -413,6 +423,16 @@ public class CustomersController {
             return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "User id required", "");
         } catch (Exception e) {
             return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), resBody);
+        }
+    }
+
+    @GetMapping("/getAllSubUsersWithParntSubUser")
+    public ApiResponse<Map<String, Object>> getAllSubUsersWithParntSubUser(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+        try {
+            Integer userId = jwtUtil.extractUserId(authorizationHeader.substring(7));
+            return new ApiResponse<>(HttpStatus.OK.value(), "Fetch sub-users successfully", this.customersService.getAllSubUsersWithParntSubUser(userId));
+        } catch (Exception e) {
+            return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Fail to fetch sub-users", "");
         }
     }
 }

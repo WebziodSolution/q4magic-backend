@@ -7,6 +7,7 @@ import com.q4magic.contacts.service.ContactsService;
 import com.q4magic.opportunityContactNotes.service.OpportunityContactNotesService;
 import com.q4magic.syncRecordsQueue.service.SyncRecordsQueueService;
 import com.q4magic.tempMail.service.TempMailService;
+import com.q4magic.customers.service.CustomersService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -513,11 +514,14 @@ public class ContactsServiceImpl implements ContactsService {
 
         List<ContactNodeDto> childDtos = new ArrayList<>(reports.size());
         for (Contacts r : reports) {
-            if (nextOnPath != null && r.getId() != null && r.getId().equals(nextOnPath)) {
-                // expand only the branch that leads to the requested contact
+            if (nextOnPath == null) {
+                // At or below the selected node -> fully expand all descendants
+                childDtos.add(buildHierarchyAlongPath(r.getId(), ownerId, pathIds, nextPathIndex + 1, buildVisited));
+            } else if (r.getId() != null && r.getId().equals(nextOnPath)) {
+                // Above the selected node -> expand only the path leading to it
                 childDtos.add(buildHierarchyAlongPath(r.getId(), ownerId, pathIds, nextPathIndex + 1, buildVisited));
             } else {
-                // sibling as leaf
+                // Sibling at a higher level (not on path to the selected node) -> leaf
                 ContactNodeDto leaf = new ContactNodeDto();
                 leaf.id = r.getId();
                 leaf.name = fullName(r);

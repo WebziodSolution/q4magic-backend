@@ -34,4 +34,7 @@ public interface CustomersRepository extends JpaRepository<Customers, Integer> {
     @Query(value = "SELECT c FROM Customers c WHERE c.username = :username AND c.password = :password")
     Customers findByUserNameAndPassword(@Param("username") String username, @Param("password") String password);
 
+    @Query("SELECT c FROM Customers c WHERE c.reportTo.id = :reportToId AND (c.id = :orgId OR c.customers.id = :orgId)")
+    List<Customers> findDirectReports(@Param("orgId") Integer orgId, @Param("reportToId") Integer reportToId);
+
 }

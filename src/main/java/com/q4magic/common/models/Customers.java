@@ -203,6 +203,10 @@ public class Customers implements UserDetails {
     @Column(name = "meeting_quota")
     private String meetingQuota;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "report_to", referencedColumnName = "cus_id")
+    private Customers reportTo;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();

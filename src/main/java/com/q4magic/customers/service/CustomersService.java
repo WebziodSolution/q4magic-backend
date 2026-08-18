@@ -13,6 +13,8 @@ public interface CustomersService extends UserDetailsService {
 
     List<CustomersDto> getAllSubUsers(Integer id);
 
+    List<CustomersDto> getAllSubUsersWithParntSubUser(Integer userId);
+
     List<CustomersDto> getAllCustomers();
 
     CustomersDto getCustomerById(Integer id);
@@ -50,5 +52,7 @@ public interface CustomersService extends UserDetailsService {
     void saveMailNotification(String mailNotification,Integer customerId);
 
     void saveDefaultCalendar(String defaultCalendar,Integer customerId);
+
+    Map<String, Object> reportHierarch(Integer customerId);
 
 }
