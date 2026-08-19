@@ -98,7 +98,8 @@ public class CustomersServiceImpl implements CustomersService {
     public Map<String, Object> getUserSalesForceToken(Integer id) {
         try {
             Map<String, Object> map = new HashMap<>();
-            Customers customers = this.customersRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+            Customers customers = this.customersRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
             map.put("accessToken_salesforce", customers.getSalesforceAccessToken());
             map.put("instanceUrl_salesforce", customers.getSalesforceInstanceUrl());
             return map;
@@ -110,7 +111,8 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public CustomerDashboardDto getDashboardData(Integer customerId, CustomerDashboardRequestDto req) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found"));
+            Customers customers = this.customersRepository.findById(customerId)
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
             if (customers.getRole() != null && customers.getRole().getRole().equals("SALES MANAGER")) {
                 return getManagerDashboardData(customerId, req);
             } else {
@@ -145,12 +147,14 @@ public class CustomersServiceImpl implements CustomersService {
                 Integer oldMeetingCount = 0;
 
                 List<Opportunities> closedOpp;
-                List<Opportunities> opportunities;            // active
+                List<Opportunities> opportunities; // active
                 List<Opportunities> allPipeLineOpportunities; // base list for pipeline total + pipeline rows
                 List<Map<String, Object>> meetingData = new ArrayList<>();
                 if (startTs != null && endTs != null) {
-                    contactCount = this.contactsRepository.countContactsByCustomerAndDateRange(customerId, startTs, endTs);
-                    List<Meetings> meetings = this.meetingsRepository.countMeetingsByCustomerAndDateRange(customerId, startTs, endTs);
+                    contactCount = this.contactsRepository.countContactsByCustomerAndDateRange(customerId, startTs,
+                            endTs);
+                    List<Meetings> meetings = this.meetingsRepository.countMeetingsByCustomerAndDateRange(customerId,
+                            startTs, endTs);
                     if (!meetings.isEmpty()) {
                         meetingCount = meetings.size();
                         for (Meetings meeting : meetings) {
@@ -158,10 +162,9 @@ public class CustomersServiceImpl implements CustomersService {
                             if (meeting.getContactIds() != null && !meeting.getContactIds().isEmpty()) {
                                 String contactIdsStr = meeting.getContactIds();
                                 Integer[] contactIds = Arrays.stream(
-                                                contactIdsStr.replace("[", "")
-                                                        .replace("]", "")
-                                                        .split(",")
-                                        )
+                                        contactIdsStr.replace("[", "")
+                                                .replace("]", "")
+                                                .split(","))
                                         .map(String::trim)
                                         .map(Integer::valueOf)
                                         .toArray(Integer[]::new);
@@ -190,9 +193,11 @@ public class CustomersServiceImpl implements CustomersService {
                             }
                         }
                     }
-                    closedOpp = this.opportunitiesRepository.findClosedOpportunitiesByCustomerAndDateRange(customerId, startTs, endTs);
+                    closedOpp = this.opportunitiesRepository.findClosedOpportunitiesByCustomerAndDateRange(customerId,
+                            startTs, endTs);
                     opportunities = this.opportunitiesRepository.findByCustomerAndDateRange(customerId, startTs, endTs);
-                    allPipeLineOpportunities = this.opportunitiesRepository.findActiveOpportunitiesByCustomerAndDateRange(customerId, startTs, endTs);
+                    allPipeLineOpportunities = this.opportunitiesRepository
+                            .findActiveOpportunitiesByCustomerAndDateRange(customerId, startTs, endTs);
                 } else {
                     // Old behavior (no date filter)
                     contactCount = this.contactsRepository.countNewContactByCustomerId(customerId);
@@ -238,7 +243,8 @@ public class CustomersServiceImpl implements CustomersService {
                         pipeLine.put("id", opp.getId());
                         pipeLine.put("name", opp.getOpportunity());
                         pipeLine.put("dealAmount", opp.getDealAmount());
-                        pipeLine.put("created_by", opp.getCustomers() != null ? opp.getCustomers().getUsername() : null);
+                        pipeLine.put("created_by",
+                                opp.getCustomers() != null ? opp.getCustomers().getUsername() : null);
 
                         if (opp.getAccount() != null) {
                             pipeLine.put("account", opp.getAccount().getAccountName());
@@ -269,13 +275,15 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public List<CustomersDto> getAllSubUsers(Integer id) {
         try {
-            Customers customers = this.customersRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+            Customers customers = this.customersRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
             List<Customers> customersList = this.customersRepository.getAllSubUsers(id);
-            if (customersList.isEmpty()) {
-                if (customers.getCustomers() != null) {
-                    customersList = this.customersRepository.getAllSubUsers(customers.getCustomers().getId());
-                }
-            }
+            // if (customersList.isEmpty()) {
+            // if (customers.getCustomers() != null) {
+            // customersList =
+            // this.customersRepository.getAllSubUsers(customers.getCustomers().getId());
+            // }
+            // }
             List<CustomersDto> customersDtoList = new java.util.ArrayList<>();
             if (!customersList.isEmpty()) {
                 for (Customers customer : customersList) {
@@ -306,7 +314,8 @@ public class CustomersServiceImpl implements CustomersService {
                 }
             }
 
-            // 2) If the logged-in user has a parent customer, fetch the parent's sub-users as well
+            // 2) If the logged-in user has a parent customer, fetch the parent's sub-users
+            // as well
             if (me.getCustomers() != null) {
                 Integer parentId = me.getCustomers().getId();
                 List<Customers> parentSubUsers = customersRepository.getAllSubUsers(parentId);
@@ -318,8 +327,16 @@ public class CustomersServiceImpl implements CustomersService {
             }
 
             List<CustomersDto> dtoList = new ArrayList<>();
+            Set<Integer> addedIds = new HashSet<>();
+
+            dtoList.add(this.getCustomerById(userId));
+            addedIds.add(userId);
+
             for (Integer id : uniqueUsers.keySet()) {
-                dtoList.add(this.getCustomerById(id));
+                if (!addedIds.contains(id)) {
+                    dtoList.add(this.getCustomerById(id));
+                    addedIds.add(id);
+                }
             }
             return dtoList;
         } catch (Exception e) {
@@ -363,7 +380,8 @@ public class CustomersServiceImpl implements CustomersService {
     public CustomersDto getCustomerById(Integer id) {
         try {
             CustomersDto customersDto = new CustomersDto();
-            Customers customer = this.customersRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+            Customers customer = this.customersRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
             BusinessInfo businessInfo = this.businessInfoRepository.findByCustomerId(id);
 
             if (businessInfo != null) {
@@ -391,15 +409,18 @@ public class CustomersServiceImpl implements CustomersService {
             }
             if (customer.getCustomers() != null) {
                 customersDto.setParentUserId(customer.getCustomers().getId());
-//                Map<String, Object> res = this.accountService.getAccountByName(customer.getCustomers().getId());
-//                if (res.containsKey("success") && (Boolean) res.get("success")) {
-//                    AccountDto accountDto = this.accountService.getAccountById((Integer) res.get("id"));
-//                    customersDto.setCrmId(accountDto.getCrmId());
-//                }
+                // Map<String, Object> res =
+                // this.accountService.getAccountByName(customer.getCustomers().getId());
+                // if (res.containsKey("success") && (Boolean) res.get("success")) {
+                // AccountDto accountDto = this.accountService.getAccountById((Integer)
+                // res.get("id"));
+                // customersDto.setCrmId(accountDto.getCrmId());
+                // }
             }
             if (customer.getSubUserType() != null) {
                 customersDto.setSubUserTypeId(customer.getSubUserType().getId());
-                customersDto.setSubUserTypeDto(this.subUserTypeService.getSubUserTypeById(customer.getSubUserType().getId()));
+                customersDto.setSubUserTypeDto(
+                        this.subUserTypeService.getSubUserTypeById(customer.getSubUserType().getId()));
             }
 
             if (customer.getStartEvalPeriod() != null) {
@@ -453,26 +474,34 @@ public class CustomersServiceImpl implements CustomersService {
 
             if (type.equals("Subuser")) {
                 customer.setAccountOwner("N");
-                Customers parentCustomer = this.customersRepository.findById(customersDto.getParentUserId()).orElseThrow(() -> new RuntimeException("Parent Customer not found"));
+                Customers parentCustomer = this.customersRepository.findById(customersDto.getParentUserId())
+                        .orElseThrow(() -> new RuntimeException("Parent Customer not found"));
                 customer.setCustomers(parentCustomer);
-                SubUserType subUserType = this.subUserTypeRepository.findById(customersDto.getSubUserTypeId()).orElseThrow(() -> new RuntimeException("SubUserType not found"));
+                SubUserType subUserType = this.subUserTypeRepository.findById(customersDto.getSubUserTypeId())
+                        .orElseThrow(() -> new RuntimeException("SubUserType not found"));
                 customer.setSubUserType(subUserType);
             } else {
                 customer.setAccountOwner("Y");
-                SubscriptionRates subscriptionRates = this.subscriptionRatesRepository.findById(customersDto.getPlanId()).orElseThrow(() -> new RuntimeException("Subscription Rates not found"));
+                SubscriptionRates subscriptionRates = this.subscriptionRatesRepository
+                        .findById(customersDto.getPlanId())
+                        .orElseThrow(() -> new RuntimeException("Subscription Rates not found"));
                 customer.setSubscriptionRates(subscriptionRates);
             }
             if (customersDto.getReportTo() != null) {
-                Customers reportto = this.customersRepository.findById(customersDto.getReportTo()).orElseThrow(() -> new RuntimeException("Customer not found"));
+                Customers reportto = this.customersRepository.findById(customersDto.getReportTo())
+                        .orElseThrow(() -> new RuntimeException("Customer not found"));
                 customer.setReportTo(reportto);
             } else {
                 customer.setReportTo(null);
             }
-//            if (customersDto.getAuthId() != null) {
-//                AuthIDetails authIdDetails = this.authIdDetailsRepository.findById(customersDto.getAuthId()).orElseThrow(() -> new RuntimeException("AuthIdDetails not found"));
-//                customer.setAuthIDetails(authIdDetails);
-//            }
-            BeanUtils.copyProperties(customersDto, customer, "id", "accountOwner", "dateRegistered", "evalPeriod", "role", "subscriptionRates", "reportTo");
+            // if (customersDto.getAuthId() != null) {
+            // AuthIDetails authIdDetails =
+            // this.authIdDetailsRepository.findById(customersDto.getAuthId()).orElseThrow(()
+            // -> new RuntimeException("AuthIdDetails not found"));
+            // customer.setAuthIDetails(authIdDetails);
+            // }
+            BeanUtils.copyProperties(customersDto, customer, "id", "accountOwner", "dateRegistered", "evalPeriod",
+                    "role", "subscriptionRates", "reportTo");
             this.customersRepository.save(customer);
             if (customersDto.getParentUserId() == null) {
                 sendWelcomeEmail(customer.getEmailAddress(), customer.getUsername());
@@ -488,9 +517,12 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public CustomersDto updateCustomer(Integer id, CustomersDto customersDto, String type) {
         try {
-            Customers customer = this.customersRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+            Customers customer = this.customersRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
             if (customersDto.getPlanId() != null) {
-                SubscriptionRates subscriptionRates = this.subscriptionRatesRepository.findById(customersDto.getPlanId()).orElseThrow(() -> new RuntimeException("Subscription Rates not found"));
+                SubscriptionRates subscriptionRates = this.subscriptionRatesRepository
+                        .findById(customersDto.getPlanId())
+                        .orElseThrow(() -> new RuntimeException("Subscription Rates not found"));
                 customer.setSubscriptionRates(subscriptionRates);
             }
             if (customersDto.getRoleId() != null) {
@@ -514,7 +546,8 @@ public class CustomersServiceImpl implements CustomersService {
             if (type.equals("Subuser")) {
                 customer.setAccountOwner("N");
                 if (customersDto.getSubUserTypeId() != null) {
-                    SubUserType subUserType = this.subUserTypeRepository.findById(customersDto.getSubUserTypeId()).orElseThrow(() -> new RuntimeException("SubUserType not found"));
+                    SubUserType subUserType = this.subUserTypeRepository.findById(customersDto.getSubUserTypeId())
+                            .orElseThrow(() -> new RuntimeException("SubUserType not found"));
                     customer.setSubUserType(subUserType);
                 }
                 customer.setFirstName(customer.getFirstName());
@@ -524,7 +557,8 @@ public class CustomersServiceImpl implements CustomersService {
             } else {
                 customer.setAccountOwner("Y");
             }
-            if (customersDto.getBillingAddressSameAsPrimary() != null && customersDto.getBillingAddressSameAsPrimary()) {
+            if (customersDto.getBillingAddressSameAsPrimary() != null
+                    && customersDto.getBillingAddressSameAsPrimary()) {
                 customer.setBillingAddress1(customersDto.getAddress1());
                 customer.setBillingAddress2(customersDto.getAddress2());
                 customer.setBillingCity(customersDto.getBillingCity());
@@ -540,12 +574,15 @@ public class CustomersServiceImpl implements CustomersService {
                 customer.setBillingCountry(customersDto.getBillingCountry());
             }
             if (customersDto.getReportTo() != null) {
-                Customers reportto = this.customersRepository.findById(customersDto.getReportTo()).orElseThrow(() -> new RuntimeException("Customer not found"));
+                Customers reportto = this.customersRepository.findById(customersDto.getReportTo())
+                        .orElseThrow(() -> new RuntimeException("Customer not found"));
                 customer.setReportTo(reportto);
             } else {
                 customer.setReportTo(null);
             }
-            BeanUtils.copyProperties(customersDto, customer, "id", "accountOwner", "role", "customers", "evalPeriod", "dateRegistered", "billingAddress1", "billingAddress2", "billingCity", "billingState", "billingZipcode", "billingCountry", "subscriptionRates", "reportTo");
+            BeanUtils.copyProperties(customersDto, customer, "id", "accountOwner", "role", "customers", "evalPeriod",
+                    "dateRegistered", "billingAddress1", "billingAddress2", "billingCity", "billingState",
+                    "billingZipcode", "billingCountry", "subscriptionRates", "reportTo");
             this.customersRepository.save(customer);
             return customersDto;
         } catch (Exception e) {
@@ -557,14 +594,16 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public void deleteCustomer(Integer id) {
         try {
-            Customers customer = this.customersRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+            Customers customer = this.customersRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
             this.customersRepository.delete(customer);
-//            if (customer.getCustomers() != null) {
-//                Map<String, Object> response = this.accountService.getAccountByName(customer.getCustomers().getId());
-//                if (response.containsKey("success") && (Boolean) response.get("success")) {
-//                    this.accountService.deleteAccount((Integer) response.get("id"), true);
-//                }
-//            }
+            // if (customer.getCustomers() != null) {
+            // Map<String, Object> response =
+            // this.accountService.getAccountByName(customer.getCustomers().getId());
+            // if (response.containsKey("success") && (Boolean) response.get("success")) {
+            // this.accountService.deleteAccount((Integer) response.get("id"), true);
+            // }
+            // }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -594,7 +633,8 @@ public class CustomersServiceImpl implements CustomersService {
             }
             Map<String, Object> isValid = ZeroBounce.validate(zeroBounceBaseUrl, zeroBounceApiKey, email);
             if (isValid.get("status").equals(false)) {
-                res.put("ZeroBounce", "Sorry, this email is not supported. Additional verification will be required. Please try a different email address.");
+                res.put("ZeroBounce",
+                        "Sorry, this email is not supported. Additional verification will be required. Please try a different email address.");
             }
             return res;
         } catch (Exception e) {
@@ -636,7 +676,7 @@ public class CustomersServiceImpl implements CustomersService {
                     return resBody;
                 }
                 if (customerByEmail.getLoginPreference() != null) {
-//                    resBody.put("loginPreference", customerByEmail.getLoginPreference());1
+                    // resBody.put("loginPreference", customerByEmail.getLoginPreference());1
                     resBody.put("loginPreference", "password");
                     return resBody;
                 } else {
@@ -644,9 +684,11 @@ public class CustomersServiceImpl implements CustomersService {
                     return resBody;
                 }
             }
-            Customers customer = this.customersRepository.findByEmailAndPassword(loginDto.getEmail(), loginDto.getPassword());
+            Customers customer = this.customersRepository.findByEmailAndPassword(loginDto.getEmail(),
+                    loginDto.getPassword());
             if (customer == null) {
-                customer = this.customersRepository.findByUserNameAndPassword(loginDto.getEmail(), loginDto.getPassword());
+                customer = this.customersRepository.findByUserNameAndPassword(loginDto.getEmail(),
+                        loginDto.getPassword());
             }
             if (customer != null) {
                 CustomersDto customerDto = new CustomersDto();
@@ -667,7 +709,8 @@ public class CustomersServiceImpl implements CustomersService {
                 } else {
                     resBody.put("roleId", customer.getSubUserType().getId());
                     resBody.put("roleName", customer.getSubUserType().getName());
-                    resBody.put("permissions", this.subUserTypeService.getSubUserTypeById(customer.getSubUserType().getId()));
+                    resBody.put("permissions",
+                            this.subUserTypeService.getSubUserTypeById(customer.getSubUserType().getId()));
                 }
             } else {
                 resBody.put("error", "Invalid credentials.");
@@ -701,7 +744,8 @@ public class CustomersServiceImpl implements CustomersService {
                     throw new RuntimeException("Account not found with username: " + forgotPasswordDto.getUsername());
                 }
                 if (correctAnswer != null && correctAnswer.equals(forgotPasswordDto.getAnswer())) {
-                    if (this.generateToken(Long.parseLong(customer.getId().toString()), customer.getUsername(), customer.getEmailAddress())) {
+                    if (this.generateToken(Long.parseLong(customer.getId().toString()), customer.getUsername(),
+                            customer.getEmailAddress())) {
                         res.put("isAnswerCorrect", true);
                         res.put("message", "A password reset link has been sent to your registered email address.");
                         return res;
@@ -748,7 +792,8 @@ public class CustomersServiceImpl implements CustomersService {
                 return resBody; // Token structure is invalid
             }
             String id = parts[0];
-            Customers customer = this.customersRepository.findById(Integer.parseInt(id)).orElseThrow(() -> new RuntimeException("Customer not found"));
+            Customers customer = this.customersRepository.findById(Integer.parseInt(id))
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
             customer.setPassword(resetPasswordDto.getPassword());
             this.customersRepository.save(customer);
             resBody.put("success", "Password has been reset successfully.");
@@ -760,7 +805,8 @@ public class CustomersServiceImpl implements CustomersService {
 
     private boolean generateTokenForSubUserRegister(Long id, String name, String email) throws Exception {
         int currentYear = java.time.Year.now().getValue();
-        Customers customers = this.customersRepository.findById(Integer.parseInt(id.toString())).orElseThrow(() -> new RuntimeException("User not found"));
+        Customers customers = this.customersRepository.findById(Integer.parseInt(id.toString()))
+                .orElseThrow(() -> new RuntimeException("User not found"));
         customers.setUsername("");
         customers.setPassword("");
         this.customersRepository.save(customers);
@@ -801,7 +847,8 @@ public class CustomersServiceImpl implements CustomersService {
                 "  font-weight: bold;" +
                 "}" +
                 ".button:hover { background-color: #44288E; }" +
-                ".footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; text-align: center; }" +
+                ".footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; text-align: center; }"
+                +
                 "</style>" +
                 "</head>" +
                 "<body>" +
@@ -812,10 +859,12 @@ public class CustomersServiceImpl implements CustomersService {
                 "<div class=\"content\">" +
                 "<p>Hi " + name + ",</p>" +
                 "<p>You’ve been invited to 360Pipe.</p>" +
-                "<p>360Pipe helps your team track deal progression,  priorities, and pipeline activity, all while automatically keeping Salesforce up to date.</p>" +
+                "<p>360Pipe helps your team track deal progression,  priorities, and pipeline activity, all while automatically keeping Salesforce up to date.</p>"
+                +
                 "<p>Please click the link below to set your password and activate your account:</p>" +
                 "<p><a href=\"" + route + "\" class=\"button\">Set Your Password</a></p>" +
-                "<p>If you need assistance, please contact 360Pipe Support at <a href=\"mailto:360pipeinc@gmail.com\">360pipeinc@gmail.com</a>.</p>" +
+                "<p>If you need assistance, please contact 360Pipe Support at <a href=\"mailto:360pipeinc@gmail.com\">360pipeinc@gmail.com</a>.</p>"
+                +
                 "<p>Welcome to 360Pipe.</p>" +
                 "</div>" +
                 "<div class=\"footer\">" +
@@ -868,7 +917,8 @@ public class CustomersServiceImpl implements CustomersService {
                 "  font-weight: bold;" +
                 "}" +
                 ".button:hover { background-color: #44288E; }" +
-                ".footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; text-align: center; }" +
+                ".footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; text-align: center; }"
+                +
                 "</style>" +
                 "</head>" +
                 "<body>" +
@@ -1002,7 +1052,8 @@ public class CustomersServiceImpl implements CustomersService {
     public Map<String, Object> changePassword(Map<String, Object> data) {
         try {
             Map<String, Object> res = new HashMap<>();
-            Customers customer = this.customersRepository.findById(Integer.parseInt(data.get("userId").toString())).orElseThrow(() -> new RuntimeException("Customer not found"));
+            Customers customer = this.customersRepository.findById(Integer.parseInt(data.get("userId").toString()))
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
             if (!customer.getPassword().equals(data.get("oldPassword").toString())) {
                 res.put("error", "Old Password Not Matched");
             }
@@ -1018,7 +1069,8 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public boolean sendRegisterInvitation(Map<String, Object> data) {
         try {
-            return this.generateTokenForSubUserRegister(Long.parseLong(data.get("userId").toString()), data.get("name").toString(), data.get("email").toString());
+            return this.generateTokenForSubUserRegister(Long.parseLong(data.get("userId").toString()),
+                    data.get("name").toString(), data.get("email").toString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -1075,8 +1127,10 @@ public class CustomersServiceImpl implements CustomersService {
                 List<Opportunities> allPipeLineOpportunities;
 
                 if (startTs != null && endTs != null) {
-                    contactCountForCustomer = this.contactsRepository.countContactsByCustomerAndDateRange(cid, startTs, endTs);
-                    List<Meetings> meetings = this.meetingsRepository.countMeetingsByCustomerAndDateRange(cid, startTs, endTs);
+                    contactCountForCustomer = this.contactsRepository.countContactsByCustomerAndDateRange(cid, startTs,
+                            endTs);
+                    List<Meetings> meetings = this.meetingsRepository.countMeetingsByCustomerAndDateRange(cid, startTs,
+                            endTs);
                     meetingCountForCustomer = (meetings != null) ? meetings.size() : 0;
 
                     if (meetings != null && !meetings.isEmpty()) {
@@ -1084,7 +1138,8 @@ public class CustomersServiceImpl implements CustomersService {
                             if (meeting.getContactIds() != null && !meeting.getContactIds().isEmpty()) {
                                 Integer[] contactIds = parseContactIds(meeting.getContactIds());
                                 for (Integer contactId : contactIds) {
-                                    if (contactId == null) continue;
+                                    if (contactId == null)
+                                        continue;
                                     Contacts contacts = this.contactsRepository.findById(contactId)
                                             .orElseThrow(() -> new RuntimeException("Contact not found"));
                                     Map<String, Object> meetingObj = new HashMap<>();
@@ -1093,14 +1148,17 @@ public class CustomersServiceImpl implements CustomersService {
                                     meetingData.add(meetingObj);
                                     if (Boolean.TRUE.equals(contacts.getFromMailScraping()))
                                         newMeetingCountForCustomer++;
-                                    else oldMeetingCountForCustomer++;
+                                    else
+                                        oldMeetingCountForCustomer++;
                                 }
                             }
                         }
                     }
-                    closedOpp = this.opportunitiesRepository.findClosedOpportunitiesByCustomerAndDateRange(cid, startTs, endTs);
+                    closedOpp = this.opportunitiesRepository.findClosedOpportunitiesByCustomerAndDateRange(cid, startTs,
+                            endTs);
                     opportunities = this.opportunitiesRepository.findByCustomerAndDateRange(cid, startTs, endTs);
-                    allPipeLineOpportunities = this.opportunitiesRepository.findActiveOpportunitiesByCustomerAndDateRange(cid, startTs, endTs);
+                    allPipeLineOpportunities = this.opportunitiesRepository
+                            .findActiveOpportunitiesByCustomerAndDateRange(cid, startTs, endTs);
                 } else {
                     contactCountForCustomer = this.contactsRepository.countNewContactByCustomerId(cid);
                     meetingCountForCustomer = this.meetingsRepository.countMeetingByCustomerId(cid);
@@ -1135,7 +1193,8 @@ public class CustomersServiceImpl implements CustomersService {
                             totalPipeLineAmount += Integer.parseInt(opp.getDealAmount().toString());
 
                         if ("Pipeline".equals(opp.getStatus())) {
-                            String accountName = (opp.getAccount() != null) ? opp.getAccount().getAccountName() : "Unknown Account";
+                            String accountName = (opp.getAccount() != null) ? opp.getAccount().getAccountName()
+                                    : "Unknown Account";
                             int currentDealAmount = Integer.parseInt(opp.getDealAmount().toString());
 
                             // Grouping Logic
@@ -1143,7 +1202,8 @@ public class CustomersServiceImpl implements CustomersService {
                                 Map<String, Object> accountGroup = new HashMap<>();
                                 accountGroup.put("id", opp.getId());
                                 accountGroup.put("account", accountName);
-                                accountGroup.put("created_by", opp.getCustomers() != null ? opp.getCustomers().getUsername() : null);
+                                accountGroup.put("created_by",
+                                        opp.getCustomers() != null ? opp.getCustomers().getUsername() : null);
                                 accountGroup.put("totalDealAmount", 0);
                                 accountGroup.put("opps", new ArrayList<Map<String, Object>>());
                                 groupedPipeLineData.put(accountName, accountGroup);
@@ -1186,12 +1246,14 @@ public class CustomersServiceImpl implements CustomersService {
     }
 
     private Integer[] parseContactIds(String contactIdsStr) {
-        if (contactIdsStr == null) return new Integer[0];
+        if (contactIdsStr == null)
+            return new Integer[0];
 
         String cleaned = contactIdsStr.trim();
         cleaned = cleaned.replace("[", "").replace("]", "").trim();
 
-        if (cleaned.isEmpty()) return new Integer[0];
+        if (cleaned.isEmpty())
+            return new Integer[0];
 
         return Arrays.stream(cleaned.split(","))
                 .map(String::trim)
@@ -1233,7 +1295,8 @@ public class CustomersServiceImpl implements CustomersService {
                 "  font-weight: bold;" +
                 "}" +
                 ".button:hover { background-color: #44288E; }" +
-                ".footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; text-align: center; }" +
+                ".footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; text-align: center; }"
+                +
                 "</style>" +
                 "</head>" +
                 "<body>" +
@@ -1244,10 +1307,12 @@ public class CustomersServiceImpl implements CustomersService {
                 "<div class=\"content\">" +
                 "<p>Hi " + name + ",</p>" +
                 "<p>Welcome to 360Pipe! We’re excited to have you on board.</p>" +
-                "<p>Your account is now fully active. You can now start tracking your deal progression and keeping your Salesforce data synchronized seamlessly.</p>" +
+                "<p>Your account is now fully active. You can now start tracking your deal progression and keeping your Salesforce data synchronized seamlessly.</p>"
+                +
                 "<p>Click the button below to log in and explore your dashboard:</p>" +
                 "<p><a href=\"" + route + "\" class=\"button\">Login</a></p>" +
-                "<p>If you need assistance, please contact 360Pipe Support at <a href=\"mailto:360pipeinc@gmail.com\">360pipeinc@gmail.com</a>.</p>" +
+                "<p>If you need assistance, please contact 360Pipe Support at <a href=\"mailto:360pipeinc@gmail.com\">360pipeinc@gmail.com</a>.</p>"
+                +
                 "</div>" +
                 "<div class=\"footer\">" +
                 "<p>&copy; " + currentYear + " 360Pipe. All rights reserved." +
@@ -1262,7 +1327,8 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public void saveCustomerTimeZone(String timeZone, Integer customerId) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found!"));
+            Customers customers = this.customersRepository.findById(customerId)
+                    .orElseThrow(() -> new RuntimeException("Customer not found!"));
             customers.setTimeZone(timeZone);
             this.customersRepository.save(customers);
         } catch (Exception e) {
@@ -1273,7 +1339,8 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public void saveWebConference(String webConference, Integer customerId) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found!"));
+            Customers customers = this.customersRepository.findById(customerId)
+                    .orElseThrow(() -> new RuntimeException("Customer not found!"));
             customers.setWebConference(webConference);
             this.customersRepository.save(customers);
         } catch (Exception e) {
@@ -1284,7 +1351,8 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public void saveMailNotification(String mailNotification, Integer customerId) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found!"));
+            Customers customers = this.customersRepository.findById(customerId)
+                    .orElseThrow(() -> new RuntimeException("Customer not found!"));
             customers.setEmailNotification(mailNotification);
             this.customersRepository.save(customers);
         } catch (Exception e) {
@@ -1295,7 +1363,8 @@ public class CustomersServiceImpl implements CustomersService {
     @Override
     public void saveDefaultCalendar(String defaultCalendar, Integer customerId) {
         try {
-            Customers customers = this.customersRepository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found!"));
+            Customers customers = this.customersRepository.findById(customerId)
+                    .orElseThrow(() -> new RuntimeException("Customer not found!"));
             customers.setDefaultCalendar(defaultCalendar);
             this.customersRepository.save(customers);
         } catch (Exception e) {
@@ -1331,15 +1400,15 @@ public class CustomersServiceImpl implements CustomersService {
             }
 
             // 3) Build a tree from the top, expanding siblings at each manager level.
-            // Only expand children deeper for the node on the path; other siblings are leaf nodes.
+            // Only expand children deeper for the node on the path; other siblings are leaf
+            // nodes.
             Set<Integer> buildVisited = new HashSet<>();
             CustomerNodeDto root = buildHierarchyAlongPath(
                     pathIds.get(0),
                     orgId,
                     pathIds,
                     1,
-                    buildVisited
-            );
+                    buildVisited);
 
             // 4) Serialize
             return toMap(root);
@@ -1372,9 +1441,9 @@ public class CustomersServiceImpl implements CustomersService {
             Integer orgId,
             List<Integer> pathIds,
             int nextPathIndex,
-            Set<Integer> buildVisited
-    ) {
-        if (currentId == null) return null;
+            Set<Integer> buildVisited) {
+        if (currentId == null)
+            return null;
 
         // Cycle protection during build
         if (!buildVisited.add(currentId)) {
@@ -1435,7 +1504,8 @@ public class CustomersServiceImpl implements CustomersService {
         String fn = c.getFirstName();
         String ln = c.getLastName();
         String name = ((fn == null ? "" : fn.trim()) + " " + (ln == null ? "" : ln.trim())).trim();
-        if (name.isEmpty()) name = "Unknown";
+        if (name.isEmpty())
+            name = "Unknown";
         return name;
     }
 
@@ -1449,7 +1519,8 @@ public class CustomersServiceImpl implements CustomersService {
             m.put("children", null);
         } else {
             List<Map<String, Object>> kids = new ArrayList<>(node.children.size());
-            for (CustomerNodeDto ch : node.children) kids.add(toMap(ch));
+            for (CustomerNodeDto ch : node.children)
+                kids.add(toMap(ch));
             m.put("children", kids);
         }
         return m;
@@ -1463,6 +1534,5 @@ public class CustomersServiceImpl implements CustomersService {
         m.put("children", children == null || children.isEmpty() ? null : children);
         return m;
     }
-
 
 }

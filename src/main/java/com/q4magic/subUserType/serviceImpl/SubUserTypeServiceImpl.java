@@ -79,6 +79,8 @@ public class SubUserTypeServiceImpl implements SubUserTypeService {
             subUserTypeDto.setCreatedBy(subUserType.getCustomers().getId());
             subUserTypeDto.setRolesActions(this.getPolicy(subUserType.getId()));
             return subUserTypeDto;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -95,6 +97,8 @@ public class SubUserTypeServiceImpl implements SubUserTypeService {
                 }
             }
             return subUserTypeDtoList;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -105,7 +109,7 @@ public class SubUserTypeServiceImpl implements SubUserTypeService {
         try {
             SubUserType isExist = this.subUserTypeRepository.isExits(subUserTypeDto.getCreatedBy(), subUserTypeDto.getName());
             if (isExist != null) {
-                throw new RuntimeException("SubUserType already exists with name: " + subUserTypeDto.getName());
+                throw new RuntimeException("Role already exists with name: " + subUserTypeDto.getName());
             }
             SubUserType subUserType = new SubUserType();
             subUserType.setName(subUserTypeDto.getName());
@@ -116,6 +120,8 @@ public class SubUserTypeServiceImpl implements SubUserTypeService {
             this.savePolicy(subUserType.getId(), subUserTypeDto.getRolesActions());
             subUserTypeDto.setRolesActions(subUserTypeDto.getRolesActions());
             return subUserTypeDto;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -126,7 +132,7 @@ public class SubUserTypeServiceImpl implements SubUserTypeService {
         try {
             SubUserType isExist = this.subUserTypeRepository.isNotEqual(subUserTypeDto.getCreatedBy(), subUserTypeDto.getName(), id);
             if (isExist != null) {
-                throw new RuntimeException("SubUserType already exists with name: " + subUserTypeDto.getName());
+                throw new RuntimeException("Role already exists with name: " + subUserTypeDto.getName());
             }
             SubUserType subUserType = this.subUserTypeRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("SubUserType not found with id: " + id));
@@ -134,6 +140,8 @@ public class SubUserTypeServiceImpl implements SubUserTypeService {
             this.subUserTypeRepository.save(subUserType);
             this.savePolicy(subUserType.getId(), subUserTypeDto.getRolesActions());
             return subUserTypeDto;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -146,6 +154,8 @@ public class SubUserTypeServiceImpl implements SubUserTypeService {
             SubUserType subUserType = this.subUserTypeRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("SubUserType not found with id: " + id));
             this.subUserTypeRepository.delete(subUserType);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
