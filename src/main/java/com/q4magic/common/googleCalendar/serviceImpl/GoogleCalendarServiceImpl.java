@@ -572,14 +572,15 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                         String plainDescription = rawDescription.replaceAll("<[^>]*>", "");
 
                         // Call your existing location service
-                        LocationResultDto result = this.locationService.extractLocations(plainDescription);
-                        if ("Location Found".equals(result.getStatus())) {
-                            // Use the first detected location, or join multiple
-                            String locationsAsString = String.join(", ", result.getExtractedLocations());
-                            googleCalendarDto.setLocation(locationsAsString);
-                        } else {
-                            googleCalendarDto.setLocation(null);
-                        }
+//                        LocationResultDto result = this.locationService.extractLocations(plainDescription);
+//                        if ("Location Found".equals(result.getStatus())) {
+//                            // Use the first detected location, or join multiple
+//                            String locationsAsString = String.join(", ", result.getExtractedLocations());
+//                            googleCalendarDto.setLocation(locationsAsString);
+//                        } else {
+//                            googleCalendarDto.setLocation(null);
+//                        }
+                        googleCalendarDto.setLocation(null);
                     }
 
                     try {

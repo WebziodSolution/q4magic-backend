@@ -526,14 +526,15 @@ public class OutlookCalendarServiceImpl implements OutlookCalendarService {
                     String plainDescription = rawDescription.replaceAll("<[^>]*>", "");
 
                     // Call your existing location service
-                    LocationResultDto result = this.locationService.extractLocations(plainDescription);
-                    if ("Location Found".equals(result.getStatus())) {
-                        // Use the first detected location, or join multiple
-                        String locationsAsString = String.join(", ", result.getExtractedLocations());
-                        outlookCalendarDto.setLocation(locationsAsString);
-                    } else {
-                        outlookCalendarDto.setLocation(null);
-                    }
+//                    LocationResultDto result = this.locationService.extractLocations(plainDescription);
+//                    if ("Location Found".equals(result.getStatus())) {
+//                        // Use the first detected location, or join multiple
+//                        String locationsAsString = String.join(", ", result.getExtractedLocations());
+//                        outlookCalendarDto.setLocation(locationsAsString);
+//                    } else {
+//                        outlookCalendarDto.setLocation(null);
+//                    }
+                    outlookCalendarDto.setLocation(null);
                 }
                 outlookCalendarDto.setCalAllDay("false");
                 if (res.has("isAllDay")) {

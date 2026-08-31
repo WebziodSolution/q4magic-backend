@@ -12,4 +12,7 @@ import java.util.List;
 public interface TeamMembersRepository extends JpaRepository<TeamMembers, Integer> {
     @Query("SELECT t FROM TeamMembers t WHERE t.teamDetails.id = :id")
     List<TeamMembers> findByTeamId(@Param("id") Integer id);
+
+    @Query("SELECT t FROM TeamMembers t WHERE t.customers.id = :id")
+    List<TeamMembers> findByMemberId(@Param("id") Integer id);
 }

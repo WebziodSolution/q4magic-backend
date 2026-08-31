@@ -94,6 +94,9 @@ public class CustomersServiceImpl implements CustomersService {
     @Autowired
     private SubscriptionRatesRepository subscriptionRatesRepository;
 
+    @Autowired
+    private TeamMembersRepository teamMembersRepository;
+
     @Override
     public Map<String, Object> getUserSalesForceToken(Integer id) {
         try {
@@ -162,9 +165,9 @@ public class CustomersServiceImpl implements CustomersService {
                             if (meeting.getContactIds() != null && !meeting.getContactIds().isEmpty()) {
                                 String contactIdsStr = meeting.getContactIds();
                                 Integer[] contactIds = Arrays.stream(
-                                        contactIdsStr.replace("[", "")
-                                                .replace("]", "")
-                                                .split(","))
+                                                contactIdsStr.replace("[", "")
+                                                        .replace("]", "")
+                                                        .split(","))
                                         .map(String::trim)
                                         .map(Integer::valueOf)
                                         .toArray(Integer[]::new);
@@ -1515,6 +1518,22 @@ public class CustomersServiceImpl implements CustomersService {
         m.put("name", node.name);
         m.put("title", node.title);
 
+        List<Map<String, Object>> teamList = new ArrayList<>();
+        if (node.id != null) {
+            List<TeamMembers> members = teamMembersRepository.findByMemberId(node.id);
+            if (members != null) {
+                for (TeamMembers member : members) {
+                    if (member.getTeamDetails() != null) {
+                        Map<String, Object> t = new LinkedHashMap<>();
+                        t.put("id", member.getTeamDetails().getId());
+                        t.put("name", member.getTeamDetails().getName());
+                        teamList.add(t);
+                    }
+                }
+            }
+        }
+        m.put("team", teamList);
+
         if (node.children == null || node.children.isEmpty()) {
             m.put("children", null);
         } else {
@@ -1531,8 +1550,24 @@ public class CustomersServiceImpl implements CustomersService {
         m.put("id", c.getId());
         m.put("name", fullName(c));
         m.put("title", c.getTitle());
+
+        List<Map<String, Object>> teamList = new ArrayList<>();
+        if (c.getId() != null) {
+            List<TeamMembers> members = teamMembersRepository.findByMemberId(c.getId());
+            if (members != null) {
+                for (TeamMembers member : members) {
+                    if (member.getTeamDetails() != null) {
+                        Map<String, Object> t = new LinkedHashMap<>();
+                        t.put("id", member.getTeamDetails().getId());
+                        t.put("name", member.getTeamDetails().getName());
+                        teamList.add(t);
+                    }
+                }
+            }
+        }
+        m.put("team", teamList);
+
         m.put("children", children == null || children.isEmpty() ? null : children);
         return m;
     }
-
 }

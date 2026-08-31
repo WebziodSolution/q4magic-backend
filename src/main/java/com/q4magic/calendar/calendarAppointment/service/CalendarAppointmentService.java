@@ -19,7 +19,16 @@ public interface CalendarAppointmentService {
 
     Map<String, Object> saveAppointment(CalendarDto calendarDto);
 
+    Map<String, Object> saveAppointment(Map<String, Object> calendarData);
+
+    Map<String, Object> setAcceptOrRejectAppointment(Map<String, Object> payload);
+
+    Map<String, Object> getEditAppointmentDetails(Integer calendarId, Integer cusId);
+
+    Map<String, Object> updateAppointmentDateTime(Map<String, Object> payload);
+
     List<Calendar> getMyCalendarAppointmentLis(Integer count, Integer cusId);
 
     Map<String, Object> sendEmailAppointmentLink(SendAppointmentLinkDto sendAppointmentLinkDto);
 }
+

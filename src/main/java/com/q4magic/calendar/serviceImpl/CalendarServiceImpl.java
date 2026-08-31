@@ -748,14 +748,15 @@ public class CalendarServiceImpl implements CalendarService {
             String plainDescription = rawDescription.replaceAll("<[^>]*>", "");
 
             // Call your existing location service
-            LocationResultDto result = this.locationService.extractLocations(plainDescription);
-            if ("Location Found".equals(result.getStatus())) {
-                // Use the first detected location, or join multiple
-                String locationsAsString = String.join(", ", result.getExtractedLocations());
-                calendar.setLocation(locationsAsString);
-            } else {
-                calendar.setLocation(null);
-            }
+//            LocationResultDto result = this.locationService.extractLocations(plainDescription);
+//            if ("Location Found".equals(result.getStatus())) {
+//                // Use the first detected location, or join multiple
+//                String locationsAsString = String.join(", ", result.getExtractedLocations());
+//                calendar.setLocation(locationsAsString);
+//            } else {
+//                calendar.setLocation(null);
+//            }
+            calendar.setLocation(null);
 
 //            if (customer.getSubUserType() != null && customer.getSubUserType().getName().toLowerCase().equals("sales representative")) {
 //
