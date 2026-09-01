@@ -435,9 +435,22 @@ public class CommonServiceImpl implements CommonService {
 
     @Override
     public String dbDate(String date) throws ParseException {
-        Date modifiedDate = new SimpleDateFormat("MM/dd/yyyy").parse(date);
-        SimpleDateFormat dbt = new SimpleDateFormat("yyyy-MM-dd");
-        return dbt.format(modifiedDate);
+        if (date == null || date.trim().isEmpty()) {
+            return "";
+        }
+        date = date.trim();
+        if (date.matches("^\\d{4}-\\d{2}-\\d{2}.*")) {
+            return date.substring(0, 10);
+        }
+        try {
+            Date modifiedDate = new SimpleDateFormat("MM/dd/yyyy").parse(date);
+            SimpleDateFormat dbt = new SimpleDateFormat("yyyy-MM-dd");
+            return dbt.format(modifiedDate);
+        } catch (ParseException e) {
+            Date converted = convertStringToDate(date);
+            SimpleDateFormat dbt = new SimpleDateFormat("yyyy-MM-dd");
+            return dbt.format(converted);
+        }
     }
 
     @Override

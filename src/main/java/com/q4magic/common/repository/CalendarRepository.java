@@ -20,6 +20,10 @@ public interface CalendarRepository extends JpaRepository<Calendar, Integer> {
     @Query("select c from Calendar c where c.customers.id = :cusId")
     List<Calendar> findCalendarByCustomerId(@Param("cusId") Integer cusId);
 
+    @Query("select c from Calendar c where c.customers.id = :cusId and c.calStartDateTime = :calStartDateTime")
+    List<Calendar> findByCustomerIdAndCalStartDateTime(@Param("cusId") Integer cusId,
+                                                      @Param("calStartDateTime") Date calStartDateTime);
+
     // List calendars for a customer between start and end date/time
     @Query("select c from Calendar c " +
             "where c.customers.id = :cusId " +

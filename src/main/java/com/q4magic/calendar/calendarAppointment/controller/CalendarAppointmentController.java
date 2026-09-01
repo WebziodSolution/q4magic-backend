@@ -32,11 +32,15 @@ public class CalendarAppointmentController {
         } catch (Exception e) {
             return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), Constants.ERROR_MSG, "");
         }
-        return new ApiResponse<>(HttpStatus.OK.value(), "Fetch Availability Slot Successfully.", this.calendarAppointmentService.getAvailabilitySlotsList(cusId));
+        return new ApiResponse<>(HttpStatus.OK.value(), "Fetch Availability Slot Successfully.",
+                this.calendarAppointmentService.getAvailabilitySlotsList(cusId));
     }
 
     @PostMapping("/saveAvailabilitySlots")
-    public ApiResponse<?> saveAvailabilitySlots(@RequestHeader(value = "Authorization", required = false) String authorizationHeader, @RequestAttribute(value = "cusId", required = false) Integer cusId, @RequestBody List<CalendarAppointmentAvailabilitySlotsDto> list) {
+    public ApiResponse<?> saveAvailabilitySlots(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @RequestAttribute(value = "cusId", required = false) Integer cusId,
+            @RequestBody List<CalendarAppointmentAvailabilitySlotsDto> list) {
         Map<String, Object> resBody = new HashMap<>();
         try {
             if (authorizationHeader != null) {
@@ -44,7 +48,10 @@ public class CalendarAppointmentController {
             }
             resBody = this.calendarAppointmentService.saveAvailabilitySlots(cusId, list);
             if (resBody.get("error").equals("")) {
-                return new ApiResponse<>(HttpStatus.OK.value(), (list.get(0).getId() == 0 || list.get(0).getId() == null) ? "Add Availability Slot Successfully" : "Update Availability Slot Successfully", resBody);
+                return new ApiResponse<>(HttpStatus.OK.value(),
+                        (list.get(0).getId() == 0 || list.get(0).getId() == null) ? "Add Availability Slot Successfully"
+                                : "Update Availability Slot Successfully",
+                        resBody);
             } else {
                 return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), Constants.ERROR_MSG, resBody);
             }
@@ -54,7 +61,8 @@ public class CalendarAppointmentController {
     }
 
     @PostMapping("/freeSlotList")
-    public ApiResponse<?> freeSlotList(@RequestBody FreeSlotListDto freeSlotListDto, @RequestParam(value = "userTimeZone") String userTimeZone) {
+    public ApiResponse<?> freeSlotList(@RequestBody FreeSlotListDto freeSlotListDto,
+            @RequestParam(value = "userTimeZone") String userTimeZone) {
         Map<String, Object> resBody = new HashMap<>();
         try {
             resBody = this.calendarAppointmentService.freeSlotList(userTimeZone, freeSlotListDto);
@@ -72,9 +80,11 @@ public class CalendarAppointmentController {
             if (resBody.get("error") == null || resBody.get("error").equals("")) {
                 return new ApiResponse<>(HttpStatus.OK.value(), "Meeting Request Sent Successfully.", resBody);
             } else if (resBody.get("error").equals("1")) {
-                return new ApiResponse<>(HttpStatus.NOT_MODIFIED.value(), "Slot Already Booked For This Appointment. Please Select Another Free Slot.", resBody);
+                return new ApiResponse<>(HttpStatus.NOT_MODIFIED.value(),
+                        "Slot Already Booked For This Appointment. Please Select Another Free Slot.", resBody);
             } else {
-                return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), resBody.get("error").toString(), resBody);
+                return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), resBody.get("error").toString(),
+                        resBody);
             }
         } catch (Exception e) {
             return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), Constants.ERROR_MSG, resBody);
@@ -88,13 +98,15 @@ public class CalendarAppointmentController {
             resBody = calendarAppointmentService.setAcceptOrRejectAppointment(payload);
             if (resBody.get("error") == null || resBody.get("error").equals("")) {
                 String status = payload.get("status") != null ? payload.get("status").toString() : "accept";
-                String msg = status.equalsIgnoreCase("accept") ? "Meeting accepted successfully!" : "Meeting rejected successfully!";
+                String msg = status.equalsIgnoreCase("accept") ? "Meeting accepted successfully!"
+                        : "Meeting rejected successfully!";
                 Object dataResult = resBody.get("result") != null ? resBody.get("result") : resBody;
                 return new ApiResponse<>(HttpStatus.OK.value(), msg, dataResult);
             } else if ("1".equals(resBody.get("error"))) {
-                return new ApiResponse<>(HttpStatus.NOT_MODIFIED.value(), "Slot Already Booked For This Appointment. Please Select Another Free Slot.", resBody);
+                return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(),
+                        "Slot Already Booked For This Meeting. Please Select Another Free Slot.", resBody);
             } else {
-                return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), resBody.get("error").toString(), resBody);
+                return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), resBody.get("error").toString(), resBody);
             }
         } catch (Exception e) {
             return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), Constants.ERROR_MSG, resBody);
@@ -102,7 +114,8 @@ public class CalendarAppointmentController {
     }
 
     @GetMapping("/getEditAppointmentDetails")
-    public ApiResponse<?> getEditAppointmentDetails(@RequestParam("id") String id, @RequestParam(value = "v", required = false) String v) {
+    public ApiResponse<?> getEditAppointmentDetails(@RequestParam("id") String id,
+            @RequestParam(value = "v", required = false) String v) {
         Map<String, Object> resBody = new HashMap<>();
         try {
             Integer calendarId = null;
@@ -149,7 +162,8 @@ public class CalendarAppointmentController {
                 Object dataResult = resBody.get("result") != null ? resBody.get("result") : resBody;
                 return new ApiResponse<>(HttpStatus.OK.value(), "Meeting updated successfully!", dataResult);
             } else {
-                return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), resBody.get("error").toString(), resBody);
+                return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), resBody.get("error").toString(),
+                        resBody);
             }
         } catch (Exception e) {
             return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), Constants.ERROR_MSG, resBody);
@@ -157,11 +171,13 @@ public class CalendarAppointmentController {
     }
 
     @PostMapping("/sendEmailAppointmentLink")
-    public ApiResponse<?> sendEmailAppointmentLink(@RequestHeader(value = "Authorization", required = false) String authorizationHeader, @RequestBody SendAppointmentLinkDto sendAppointmentLinkDto) {
+    public ApiResponse<?> sendEmailAppointmentLink(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @RequestBody SendAppointmentLinkDto sendAppointmentLinkDto) {
         Map<String, Object> resBody = new HashMap<>();
         try {
             resBody = calendarAppointmentService.sendEmailAppointmentLink(sendAppointmentLinkDto);
-            if(resBody.get("error").equals("")) {
+            if (resBody.get("error").equals("")) {
                 return new ApiResponse<>(HttpStatus.OK.value(), "Send Email Successfully.", resBody);
             } else {
                 return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), Constants.ERROR_MSG, resBody);
