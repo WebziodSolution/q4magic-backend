@@ -9,6 +9,7 @@ import com.q4magic.common.repository.CustomersRepository;
 import com.q4magic.common.repository.TeamDetailsRepository;
 import com.q4magic.teamDetails.service.TeamDetailsService;
 import com.q4magic.teamMembers.service.TeamMembersService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,16 +29,21 @@ public class TeamDetailsServiceImpl implements TeamDetailsService {
     private TeamMembersService teamMembersService;
 
     @Override
-    public Map<String, Object> getAllTeamAndMembers() {
+    public Map<String, Object> getAllTeamAndMembers(Integer createdBy) {
         try {
+            Customers customers = customersRepository.findById(createdBy).orElseThrow(() -> new EntityNotFoundException("Customer not found"));
             Map<String, Object> result = new HashMap<>();
 
             List<Map<String, Object>> teamsList = new ArrayList<>();
             List<Map<String, Object>> individualsList = new ArrayList<>();
 
             // ===== 1️⃣ Build Teams and Members =====
-            List<TeamDetails> teamDetailsList = this.teamDetailsRepository.findAll();
-
+            List<TeamDetails> teamDetailsList = this.teamDetailsRepository.findCreatedBy(createdBy);
+            if (teamDetailsList == null) {
+                if (customers.getCustomers() != null) {
+                    teamDetailsList = this.teamDetailsRepository.findCreatedBy(customers.getCustomers().getId());
+                }
+            }
             if (!teamDetailsList.isEmpty()) {
                 for (TeamDetails teamDetails : teamDetailsList) {
                     Map<String, Object> teamMap = new HashMap<>();
@@ -61,8 +67,8 @@ public class TeamDetailsServiceImpl implements TeamDetailsService {
             }
 
             // ===== 2️⃣ Build Individuals (Not in any team) =====
-            List<Customers> customersList = this.customersRepository.findAll();
-
+            List<Customers> customersList = this.customersRepository.getAllSubUsers(createdBy);
+            customersList.add(customers);
             for (Customers customer : customersList) {
                 boolean isInTeam = false;
 

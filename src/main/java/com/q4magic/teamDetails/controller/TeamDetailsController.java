@@ -26,7 +26,8 @@ public class TeamDetailsController {
     ) {
         Map<String, Object> resBody = new HashMap<>();
         try {
-            return new ApiResponse<>(HttpStatus.OK.value(), "Team fetched successfully", this.teamDetailsService.getAllTeamAndMembers());
+            Integer loginUserId = jwtUtil.extractUserId(authorizationHeader.substring(7));
+            return new ApiResponse<>(HttpStatus.OK.value(), "Team fetched successfully", this.teamDetailsService.getAllTeamAndMembers(loginUserId));
         } catch (Exception e) {
             return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to fetch", resBody);
         }

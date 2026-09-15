@@ -7,7 +7,7 @@ import java.util.Map;
 
 public interface TeamDetailsService {
 
-    Map<String, Object> getAllTeamAndMembers();
+    Map<String, Object> getAllTeamAndMembers(Integer createdBy);
 
     List<TeamDetailsDto> getAllTeamDetails(Integer createdBy);
 

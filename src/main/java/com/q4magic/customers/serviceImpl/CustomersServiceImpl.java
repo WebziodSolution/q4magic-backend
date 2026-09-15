@@ -715,6 +715,15 @@ public class CustomersServiceImpl implements CustomersService {
                     resBody.put("permissions",
                             this.subUserTypeService.getSubUserTypeById(customer.getSubUserType().getId()));
                 }
+                if (customer.getSubscriptionRates() != null) {
+                    resBody.put("subscriptionPlan", customer.getSubscriptionRates().getId());
+                } else {
+                    if (customer.getCustomers() != null && customer.getCustomers().getSubscriptionRates() != null) {
+                        resBody.put("subscriptionPlan", customer.getCustomers().getSubscriptionRates().getId());
+                    }else{
+                        resBody.put("subscriptionPlan", null);
+                    }
+                }
             } else {
                 resBody.put("error", "Invalid credentials.");
             }
