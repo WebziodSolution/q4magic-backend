@@ -703,7 +703,7 @@ public class CalendarAppointmentServiceImpl implements CalendarAppointmentServic
                                     "<body>" +
                                     "<div class=\"container\">" +
                                     "<div class=\"header\">" +
-                                    "<img src=\"" + finalSiteUrl
+                                    "<img src=\"" + siteUrl
                                     + "images/logo/360Pipe_logo.png\" alt=\"Site Logo\" class=\"logo\">" +
                                     "</div>" +
                                     "<div class=\"content\">" +
@@ -781,7 +781,7 @@ public class CalendarAppointmentServiceImpl implements CalendarAppointmentServic
                                         "<body>" +
                                         "<div class=\"container\">" +
                                         "<div class=\"header\">" +
-                                        "<img src=\"" + finalSiteUrl
+                                        "<img src=\"" + siteUrl
                                         + "images/logo/360Pipe_logo.png\" alt=\"Site Logo\" class=\"logo\">" +
                                         "</div>" +
                                         "<div class=\"content\">" +
@@ -1547,7 +1547,7 @@ public class CalendarAppointmentServiceImpl implements CalendarAppointmentServic
                                 "<body>" +
                                 "<div class=\"container\">" +
                                 "<div class=\"header\">" +
-                                "<img src=\"" + finalSiteUrl
+                                "<img src=\"" + siteUrl
                                 + "images/logo/360Pipe_logo.png\" alt=\"Site Logo\" class=\"logo\">" +
                                 "</div>" +
                                 "<div class=\"content\">" +
@@ -1624,7 +1624,7 @@ public class CalendarAppointmentServiceImpl implements CalendarAppointmentServic
                                     "<body>" +
                                     "<div class=\"container\">" +
                                     "<div class=\"header\">" +
-                                    "<img src=\"" + finalSiteUrl
+                                    "<img src=\"" + siteUrl
                                     + "images/logo/360Pipe_logo.png\" alt=\"Site Logo\" class=\"logo\">" +
                                     "</div>" +
                                     "<div class=\"content\">" +
@@ -2032,7 +2032,7 @@ public class CalendarAppointmentServiceImpl implements CalendarAppointmentServic
                             + ".content { padding: 20px 0; }"
                             + ".footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; text-align: center; }"
                             + "</style></head><body><div class=\"container\"><div class=\"header\">"
-                            + "<img src=\"" + finalSiteUrl
+                            + "<img src=\"" + siteUrl
                             + "images/logo/360Pipe_logo.png\" alt=\"Site Logo\" class=\"logo\"></div>"
                             + "<div class=\"content\">"
                             + "<p>Hi " + finalFirstName + " " + finalLastName + ",</p>"
@@ -2079,7 +2079,7 @@ public class CalendarAppointmentServiceImpl implements CalendarAppointmentServic
                                     + ".content { padding: 20px 0; }"
                                     + ".footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #777; text-align: center; }"
                                     + "</style></head><body><div class=\"container\"><div class=\"header\">"
-                                    + "<img src=\"" + finalSiteUrl
+                                    + "<img src=\"" + siteUrl
                                     + "images/logo/360Pipe_logo.png\" alt=\"Site Logo\" class=\"logo\"></div>"
                                     + "<div class=\"content\">"
                                     + "<p>Hi,</p>"

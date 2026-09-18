@@ -50,11 +50,11 @@ public class ResultsServiceImpl implements ResultsService {
                         if (opportunities != null && !opportunities.isEmpty()) {
                             for (Opportunities opp : opportunities) {
 
-                                if ("Pipeline".equalsIgnoreCase(opp.getStatus())) {
+                                if ("Pipeline".equalsIgnoreCase(opp.getStatus()) && opp.getDealAmount() != null && opp.getDealAmount() != 0) {
                                     Double dealAmount = opp.getDealAmount() != null ? opp.getDealAmount() : 0.0;
                                     pipelineTotal += dealAmount;
                                 }
-                                if ("Closed Won".equalsIgnoreCase(opp.getSalesStage()) && "Won".equalsIgnoreCase(opp.getStatus())) {
+                                if ("Closed Won".equalsIgnoreCase(opp.getSalesStage()) && "Won".equalsIgnoreCase(opp.getStatus()) && opp.getDealAmount() != null && opp.getDealAmount() != 0) {
                                     Double dealAmount = opp.getDealAmount() != null ? opp.getDealAmount() : 0.0;
                                     revTotal += dealAmount;
                                 }
@@ -80,11 +80,11 @@ public class ResultsServiceImpl implements ResultsService {
                 if (opportunities != null && !opportunities.isEmpty()) {
                     for (Opportunities opp : opportunities) {
 
-                        if ("Pipeline".equalsIgnoreCase(opp.getStatus())) {
+                        if ("Pipeline".equalsIgnoreCase(opp.getStatus()) && opp.getDealAmount() != null && opp.getDealAmount() != 0) {
                             Double dealAmount = opp.getDealAmount() != null ? opp.getDealAmount() : 0.0;
                             pipelineTotal += dealAmount;
                         }
-                        if ("Closed Won".equalsIgnoreCase(opp.getSalesStage()) && "Won".equalsIgnoreCase(opp.getStatus())) {
+                        if ("Closed Won".equalsIgnoreCase(opp.getSalesStage()) && "Won".equalsIgnoreCase(opp.getStatus()) && opp.getDealAmount() != null && opp.getDealAmount() != 0) {
                             Double dealAmount = opp.getDealAmount() != null ? opp.getDealAmount() : 0.0;
                             revTotal += dealAmount;
                         }

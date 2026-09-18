@@ -747,21 +747,17 @@ public class CalendarServiceImpl implements CalendarService {
             // Optional: strip HTML tags to get plain text
             String plainDescription = rawDescription.replaceAll("<[^>]*>", "");
 
-            // Call your existing location service
-//            LocationResultDto result = this.locationService.extractLocations(plainDescription);
-//            if ("Location Found".equals(result.getStatus())) {
-//                // Use the first detected location, or join multiple
-//                String locationsAsString = String.join(", ", result.getExtractedLocations());
-//                calendar.setLocation(locationsAsString);
-//            } else {
-//                calendar.setLocation(null);
-//            }
+//             Call your existing location service
+            LocationResultDto result = this.locationService.extractLocations(plainDescription);
+            if ("Location Found".equals(result.getStatus())) {
+                // Use the first detected location, or join multiple
+                String locationsAsString = String.join(", ", result.getExtractedLocations());
+                calendar.setLocation(locationsAsString);
+            } else {
+                calendar.setLocation(null);
+            }
             calendar.setLocation(null);
 
-//            if (customer.getSubUserType() != null && customer.getSubUserType().getName().toLowerCase().equals("sales representative")) {
-//
-//
-//            }
             Integer oldMeetingCount = 0;
             Integer newMeetingCount = 0;
             Set<String> newAttendeeSet = calAttendees.stream()
