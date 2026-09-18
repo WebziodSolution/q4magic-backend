@@ -63,6 +63,7 @@ public class SalesforceController {
     @GetMapping("/exchangeToken")
     public ApiResponse<Map<String, Object>> exchangeToken(
             @RequestParam("code") String authCode,
+            @RequestParam(value = "code_verifier", required = false) String codeVerifier,
             @RequestHeader(value = "Authorization", required = false) String authorizationHeader
     ) {
         try {
@@ -71,18 +72,21 @@ public class SalesforceController {
             String clientId = env.getProperty("sf.client-id");
             String clientSecret = env.getProperty("sf.client-secret");
             String redirectUrl = env.getProperty("sf.redirect-url"); // ✅ must match frontend redirect exactly
-
-            HttpResponse<JsonNode> tokenResponse = Unirest.post(loginUrl + "/services/oauth2/token")
+            MultipartBody tokenRequest = Unirest.post(loginUrl + "/services/oauth2/token")
                     .field("code", authCode)
                     .field("grant_type", "authorization_code")
                     .field("client_id", clientId)
                     .field("client_secret", clientSecret)
-                    .field("redirect_uri", redirectUrl)
-                    .asJson();
-
+                    .field("redirect_uri", redirectUrl);
+            // ✅ If PKCE code_verifier is present, send it to Salesforce
+            if (codeVerifier != null && !codeVerifier.trim().isEmpty()) {
+                tokenRequest.field("code_verifier", codeVerifier.trim());
+            }
+            HttpResponse<JsonNode> tokenResponse = tokenRequest.asJson();
             if (tokenResponse.getStatus() != 200) {
+                String errorDetails = tokenResponse.getBody() != null ? tokenResponse.getBody().toString() : tokenResponse.getStatusText();
                 return new ApiResponse<>(tokenResponse.getStatus(),
-                        "Failed to exchange token: " + tokenResponse.getStatusText(), null);
+                        "Failed to exchange token: " + errorDetails, null);
             }
 
             String accessToken = tokenResponse.getBody().getObject().getString("access_token");
