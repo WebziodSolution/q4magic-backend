@@ -325,6 +325,29 @@ public class CalendarAppointmentServiceImpl implements CalendarAppointmentServic
                 timeSlots.add(s);
             }
 
+            // Sort timeSlots chronologically across one or more days
+            timeSlots.sort((a, b) -> {
+                String startA = a.get("start");
+                String startB = b.get("start");
+                if (startA == null && startB == null) return 0;
+                if (startA == null) return -1;
+                if (startB == null) return 1;
+                String[] patterns = { "MM/dd/yyyy HH:mm:ss", "yyyy-MM-dd HH:mm:ss", "MM/dd/yyyy HH:mm", "yyyy-MM-dd HH:mm" };
+                Date dateA = null;
+                Date dateB = null;
+                for (String p : patterns) {
+                    try {
+                        SimpleDateFormat sdf = new SimpleDateFormat(p, Locale.ENGLISH);
+                        if (dateA == null) dateA = sdf.parse(startA);
+                        if (dateB == null) dateB = sdf.parse(startB);
+                    } catch (Exception ignored) {}
+                }
+                if (dateA != null && dateB != null) {
+                    return dateA.compareTo(dateB);
+                }
+                return startA.compareTo(startB);
+            });
+
             JSONObject reqObj = new JSONObject();
             reqObj.put("customerId", cusId);
             reqObj.put("title", title);
