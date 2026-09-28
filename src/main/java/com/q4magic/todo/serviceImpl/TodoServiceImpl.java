@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.util.*;
@@ -47,6 +48,9 @@ public class TodoServiceImpl implements TodoService {
 
     @Autowired
     private TodoAttachmentsService todoAttachmentsService;
+
+    @Autowired
+    private TodoNotesRepository todoNotesRepository;
 
     @Override
     public List<TodoDto> getTodoByTeam(Integer customerId, List<Integer> teamIds, String status) {
@@ -296,16 +300,39 @@ public class TodoServiceImpl implements TodoService {
         }
     }
 
+    @Transactional
     @Override
     public void deleteTodo(Integer id, Boolean syncToSalesforce) {
         try {
             Todo todo = this.todoRepository.findById(id).orElseThrow(() -> new RuntimeException("Todo not found"));
-            List<TodoAttachments> todoAttachmentsList = this.todoAttachmentsRepository.getByTodoId(id);
-            if (!todoAttachmentsList.isEmpty()) {
-                for (TodoAttachments todoAttachments : todoAttachmentsList) {
-                    this.todoAttachmentsService.deleteAttachment(todoAttachments.getId());
+
+            // 1. Clean up physical files on disk if directory exists
+            if (todo.getCreatedBy() != null) {
+                File todoFolder = new File(FILE_DIRECTORY + todo.getCreatedBy().getId() + "/todo/" + todo.getId());
+                if (todoFolder.exists()) {
+                    this.commonService.deleteDirectoryRecursively(todoFolder);
                 }
             }
+
+            // 2. Delete all attachments from database
+            List<TodoAttachments> todoAttachmentsList = this.todoAttachmentsRepository.getByTodoId(id);
+            if (todoAttachmentsList != null && !todoAttachmentsList.isEmpty()) {
+                this.todoAttachmentsRepository.deleteAll(todoAttachmentsList);
+            }
+
+            // 3. Delete all assignments for this todo
+            List<TodoAssign> todoAssignList = this.todoAssignRepository.getByTodoId(id);
+            if (todoAssignList != null && !todoAssignList.isEmpty()) {
+                this.todoAssignRepository.deleteAll(todoAssignList);
+            }
+
+            // 4. Delete all notes for this todo
+            List<TodoNotes> todoNotesList = this.todoNotesRepository.getByTodoId(id);
+            if (todoNotesList != null && !todoNotesList.isEmpty()) {
+                this.todoNotesRepository.deleteAll(todoNotesList);
+            }
+
+            // 5. Delete the todo entity
             this.todoRepository.delete(todo);
         } catch (Exception e) {
             e.printStackTrace();

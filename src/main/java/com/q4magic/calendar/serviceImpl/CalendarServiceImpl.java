@@ -756,7 +756,7 @@ public class CalendarServiceImpl implements CalendarService {
             } else {
                 calendar.setLocation(null);
             }
-            calendar.setLocation(null);
+//            calendar.setLocation(null);
 
             Integer oldMeetingCount = 0;
             Integer newMeetingCount = 0;

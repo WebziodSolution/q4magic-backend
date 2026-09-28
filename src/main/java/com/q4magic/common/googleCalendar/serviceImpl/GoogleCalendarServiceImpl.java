@@ -580,7 +580,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                         } else {
                             googleCalendarDto.setLocation(null);
                         }
-                        googleCalendarDto.setLocation(null);
+//                        googleCalendarDto.setLocation(null);
                     }
 
                     try {

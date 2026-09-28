@@ -534,7 +534,7 @@ public class OutlookCalendarServiceImpl implements OutlookCalendarService {
                     } else {
                         outlookCalendarDto.setLocation(null);
                     }
-                    outlookCalendarDto.setLocation(null);
+//                    outlookCalendarDto.setLocation(null);
                 }
                 outlookCalendarDto.setCalAllDay("false");
                 if (res.has("isAllDay")) {
