@@ -156,8 +156,13 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 accessToken = "";
             }
             if (!accessToken.equals("")) {
-                accessToken = refreshToken(customer.getGoogleCalendarRefreshToken());
-                if (accessToken != null) {
+                if (customer.getGoogleCalendarRefreshToken() != null && !customer.getGoogleCalendarRefreshToken().isEmpty()) {
+                    String refreshed = refreshToken(customer.getGoogleCalendarRefreshToken());
+                    if (refreshed != null) {
+                        accessToken = refreshed;
+                    }
+                }
+                if (accessToken != null && !accessToken.isEmpty()) {
                     RestTemplate apiCall = new RestTemplate();
                     String requestUrl = "https://www.googleapis.com/calendar/v3/calendars/primary";
                     HttpHeaders headers = new HttpHeaders();
@@ -171,6 +176,12 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                     customer.setGoogleCalendarAccessToken(accessToken);
                     customer.setGoogleCalendarEmail(googleCalendarEmail);
                     this.customersRepository.save(customer);
+                } else {
+                    customer.setGoogleCalendarAccessToken(null);
+                    customer.setGoogleCalendarRefreshToken(null);
+                    customer.setGoogleCalendarEmail(null);
+                    customer.setGoogleCalendarSyncTime(null);
+                    this.customersRepository.save(customer);
                 }
             }
         } catch (Exception e) {
@@ -178,67 +189,43 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
         }
     }
 
-    // @Override
-    // public String refreshToken(String refreshToken) {
-    // if (refreshToken == null || refreshToken.isBlank()) {
-    // throw new RuntimeException("Google refresh token missing. User must reconnect
-    // Google Calendar.");
-    // }
-    //
-    // try {
-    // HttpHeaders headers = new HttpHeaders();
-    // headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-    //
-    // MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-    // form.add("client_id", clientId);
-    // form.add("client_secret", clientSecret);
-    // form.add("refresh_token", refreshToken);
-    // form.add("grant_type", "refresh_token");
-    // // NOTE: redirect_uri is NOT required for refresh_token grant; remove it.
-    //
-    // HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(form,
-    // headers);
-    //
-    // // Use the newer endpoint you already declared as TOKEN_URL
-    // String message = restTemplate.postForObject(TOKEN_URL, entity, String.class);
-    //
-    // JSONObject jsonObject = new JSONObject(message);
-    // return jsonObject.getString("access_token");
-    //
-    // } catch (HttpClientErrorException e) {
-    // String body = e.getResponseBodyAsString();
-    //
-    // // IMPORTANT: invalid_grant means refresh token is dead -> user must re-auth
-    // if (e.getStatusCode() == HttpStatus.BAD_REQUEST
-    // && body != null
-    // && body.contains("invalid_grant")) {
-    //
-    // throw new RuntimeException("Google refresh token is expired/revoked. User
-    // must reconnect Google Calendar.", e);
-    // }
-    //
-    // throw new RuntimeException("Failed to refresh Google access token: " + body,
-    // e);
-    // } catch (Exception e) {
-    // throw new RuntimeException("Failed to refresh Google access token.", e);
-    // }
-    // }
     @Override
     public String refreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.trim().isEmpty()) {
+            return null;
+        }
+
         try {
             RestTemplate apiCall = new RestTemplate();
-            String requestUrl = "https://www.googleapis.com/oauth2/v4/token";
-            Map<String, String> params = new HashMap<String, String>();
-            params.put("client_id", clientId);
-            params.put("client_secret", clientSecret);
-            params.put("refresh_token", refreshToken);
-            params.put("grant_type", "refresh_token");
-            params.put("redirect_uri", redirectUri);
-            String message = apiCall.postForObject(requestUrl, params, String.class);
-            // log.error("RefreshToken : "+ message);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("client_id", clientId);
+            form.add("client_secret", clientSecret);
+            form.add("refresh_token", refreshToken);
+            form.add("grant_type", "refresh_token");
+
+            HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(form, headers);
+            String message = apiCall.postForObject(TOKEN_URL, entity, String.class);
+
+            if (message == null) {
+                return null;
+            }
+
             JSONObject jsonObject = new JSONObject(message);
-            return jsonObject.getString("access_token");
+            return jsonObject.optString("access_token", null);
+        } catch (HttpClientErrorException e) {
+            String body = e.getResponseBodyAsString();
+            System.err.println("Google refreshToken error (" + e.getStatusCode() + "): " + body);
+
+            // invalid_grant: Token has been expired or revoked -> user must reconnect Google Calendar
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST && body != null && body.contains("invalid_grant")) {
+                return null;
+            }
+            throw new RuntimeException("RefreshGoogleCalendarToken failed: " + body, e);
         } catch (Exception e) {
+            System.err.println("Error in refreshToken: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("RefreshGoogleCalendarToken : " + e);
         }
@@ -261,6 +248,13 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                     this.customersRepository.save(customer);
                     String timeZone = getUserCalendarTimezone(accessToken);
                     resBody.put("calTimeZone", timeZone);
+                } else {
+                    customer.setGoogleCalendarAccessToken(null);
+                    customer.setGoogleCalendarRefreshToken(null);
+                    customer.setGoogleCalendarEmail(null);
+                    customer.setGoogleCalendarSyncTime(null);
+                    this.customersRepository.save(customer);
+                    resBody.put("error", "Google Calendar authorization has expired or was revoked. Please reconnect Google Calendar.");
                 }
             }
         } catch (Exception e) {
@@ -476,6 +470,14 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
                     JSONObject jsonObject = new JSONObject(responseJson.getBody());
                     resBody.put("caldSycId", jsonObject.getString("id"));
+                } else {
+                    customer.setGoogleCalendarAccessToken(null);
+                    customer.setGoogleCalendarRefreshToken(null);
+                    customer.setGoogleCalendarEmail(null);
+                    customer.setGoogleCalendarSyncTime(null);
+                    customersRepository.save(customer);
+                    resBody.put("error", "Google Calendar authorization has expired or was revoked. Please reconnect Google Calendar.");
+                    return resBody;
                 }
             }
 
@@ -511,6 +513,12 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                     HttpEntity<String> entity = new HttpEntity<String>("", headers);
                     ResponseEntity<String> responseJson = apiCall.exchange(requestUrl, HttpMethod.DELETE, entity,
                             String.class);
+                } else {
+                    customer.setGoogleCalendarAccessToken(null);
+                    customer.setGoogleCalendarRefreshToken(null);
+                    customer.setGoogleCalendarEmail(null);
+                    customer.setGoogleCalendarSyncTime(null);
+                    this.customersRepository.save(customer);
                 }
             }
         } catch (Exception e) {
@@ -929,16 +937,29 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(form, headers);
 
-        ResponseEntity<GoogleOAuthTokenResponse> response = restTemplate.postForEntity(TOKEN_URL, requestEntity,
-                GoogleOAuthTokenResponse.class);
+        try {
+            ResponseEntity<GoogleOAuthTokenResponse> response = restTemplate.postForEntity(TOKEN_URL, requestEntity,
+                    GoogleOAuthTokenResponse.class);
 
-        GoogleOAuthTokenResponse body = response.getBody();
-        if (body == null || body.getAccessToken() == null) {
-            throw new RuntimeException("Failed to refresh access token from Google");
+            GoogleOAuthTokenResponse body = response.getBody();
+            if (body == null || body.getAccessToken() == null) {
+                throw new RuntimeException("Failed to refresh access token from Google");
+            }
+
+            customer.setGoogleCalendarAccessToken(body.getAccessToken());
+            customersRepository.save(customer);
+        } catch (HttpClientErrorException e) {
+            String responseBody = e.getResponseBodyAsString();
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST && responseBody != null && responseBody.contains("invalid_grant")) {
+                customer.setGoogleCalendarAccessToken(null);
+                customer.setGoogleCalendarRefreshToken(null);
+                customer.setGoogleCalendarEmail(null);
+                customer.setGoogleCalendarSyncTime(null);
+                customersRepository.save(customer);
+                throw new RuntimeException("Google Calendar token expired or revoked. Please reconnect Google Calendar.", e);
+            }
+            throw e;
         }
-
-        customer.setGoogleCalendarAccessToken(body.getAccessToken());
-        customersRepository.save(customer);
     }
 
     private ZonedDateTime parseEventDateTime(GoogleEventDateTime src) {

@@ -411,6 +411,13 @@ public class CalendarServiceImpl implements CalendarService {
                                 if (googleFlag == 0) {
                                     googleCalIdList = this.googleCalendarService.downloadGoogleCalendarToLocalData(cusId, googleCalIdList, googleAccessToken, currentDate);
                                 }
+                            } else {
+                                googleCalendar = false;
+                                customer.setGoogleCalendarAccessToken(null);
+                                customer.setGoogleCalendarRefreshToken(null);
+                                customer.setGoogleCalendarEmail(null);
+                                customer.setGoogleCalendarSyncTime(null);
+                                this.customersRepository.save(customer);
                             }
                         }
                     }
@@ -478,6 +485,13 @@ public class CalendarServiceImpl implements CalendarService {
                                 if (googleFlag == 0) {
                                     googleCalIdList = this.googleCalendarService.downloadGoogleCalendarToLocalData(cusId, googleCalIdList, googleAccessToken, currentDate);
                                 }
+                            } else {
+                                googleCalendar = false;
+                                customer.setGoogleCalendarAccessToken(null);
+                                customer.setGoogleCalendarRefreshToken(null);
+                                customer.setGoogleCalendarEmail(null);
+                                customer.setGoogleCalendarSyncTime(null);
+                                this.customersRepository.save(customer);
                             }
                         }
                     }
@@ -525,6 +539,13 @@ public class CalendarServiceImpl implements CalendarService {
                             if (googleFlag == 0) {
                                 googleCalIdList = this.googleCalendarService.downloadGoogleCalendarToLocalData(cusId, googleCalIdList, googleAccessToken, currentDate);
                             }
+                        } else {
+                            googleCalendar = false;
+                            customer.setGoogleCalendarAccessToken(null);
+                            customer.setGoogleCalendarRefreshToken(null);
+                            customer.setGoogleCalendarEmail(null);
+                            customer.setGoogleCalendarSyncTime(null);
+                            this.customersRepository.save(customer);
                         }
                     }
                 }

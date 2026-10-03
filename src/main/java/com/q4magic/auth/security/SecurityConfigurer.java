@@ -39,7 +39,16 @@ public class SecurityConfigurer {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(corsCustomizer -> corsCustomizer.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/calendarAppointment/**","/setAcceptOrRejectAppointment","/teamDetails/**","/microsoft/exchange","/subscriptionRates/**", "/calendarAppointment/**", "/calendarAppointmentEventType/**", "/teamMembers/**", "/teamDetails/**", "/customerQuota/**", "/closeplan/**", "/closeplannotes/**", "/outlookCalendar/**", "/time-zones/**", "/dns/mx", "/api/signature/**", "/subUserType/create/all", "/uploadFile", "/businessInfo/**", "/authIdDetails/**", "/customers/**", "/salesforce/**", "/country/**", "/state/**", "/roles/**", "/opportunities/get/all/options", "/opportunities/updateOpportunityData", "/opportunities/createOpportunityData", "/opportunities/checkOpportunity").permitAll()
+                        .requestMatchers("/calendarAppointment/**", "/setAcceptOrRejectAppointment", "/teamDetails/**",
+                                "/microsoft/exchange", "/subscriptionRates/**", "/calendarAppointment/**",
+                                "/calendarAppointmentEventType/**", "/teamMembers/**", "/teamDetails/**",
+                                "/customerQuota/**", "/closeplan/**", "/closeplannotes/**", "/outlookCalendar/**",
+                                "/time-zones/**", "/dns/mx", "/api/signature/**", "/subUserType/create/all",
+                                "/uploadFile", "/businessInfo/**", "/authIdDetails/**", "/customers/**",
+                                "/salesforce/**", "/country/**", "/state/**", "/roles/**",
+                                "/opportunities/get/all/options", "/opportunities/updateOpportunityData",
+                                "/opportunities/createOpportunityData", "/opportunities/checkOpportunity")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(this.jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
@@ -47,13 +56,13 @@ public class SecurityConfigurer {
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             System.out.println("Access Denied: " + accessDeniedException.getMessage());
                             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied need token");
-                        })
-                );
+                        }));
         return http.build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -61,6 +70,7 @@ public class SecurityConfigurer {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(siteURL)); // Adjust as needed
+        // configuration.setAllowedOrigins("*"); // Adjust as needed
         configuration.addAllowedHeader("*"); // Allows any headers, adjust as needed
         configuration.addAllowedMethod("*"); // Allows all HTTP methods, adjust as needed
 
